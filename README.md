@@ -54,8 +54,11 @@ http_archive(
     sha256 = "8c48283aeb70e7165af48191b0e39b7434b0368718709d1bced5c3781787d8e7",
 )
 
-load("@io_bazel_rules_scala//:version.bzl", "bazel_version")
-bazel_version(name = "bazel_version")
+# Stores Scala version and other configuration
+# 2.12 is a default version, other versions can be use by passing them explicitly:
+# scala_config(scala_version = "2.11.12")
+load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
+scala_config()
 
 load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
 scala_register_toolchains()
@@ -163,7 +166,8 @@ for an example workspace using another scala version.
 
 | minimal bazel version | rules_scala gitsha |
 |--------|--------------------|
-| 2.0.0  | HEAD               |
+| 3.5.0  | HEAD               |
+| 2.0.0  | 116709091e5e1aab3346184217b565f4cb7ba4eb |
 | 1.1.0  | d681a952da74fc61a49fc3167b03548f42fc5dde |
 | 0.28.1 | bd0c388125e12f4f173648fc4474f73160a5c628 |
 | 0.23.x | ca655e5a330cbf1d66ce1d9baa63522752ec6011 |

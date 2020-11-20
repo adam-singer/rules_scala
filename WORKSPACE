@@ -4,6 +4,15 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
+skylib_version = "1.0.3"
+
+http_archive(
+    name = "bazel_skylib",
+    sha256 = "1c531376ac7e5a180e0237938a2536de0c54d93f5c278634818e0efc952dd56c",
+    type = "tar.gz",
+    url = "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/{}/bazel-skylib-{}.tar.gz".format(skylib_version, skylib_version),
+)
+
 _build_tools_release = "3.3.0"
 
 http_archive(
@@ -17,17 +26,18 @@ load("@com_github_bazelbuild_buildtools//buildifier:deps.bzl", "buildifier_depen
 
 buildifier_dependencies()
 
-load("@io_bazel_rules_scala//:version.bzl", "bazel_version")
+load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
 
-bazel_version(name = "bazel_version")
+scala_config()
 
+load("@io_bazel_rules_scala_config//:config.bzl", "SCALA_MAJOR_VERSION")
 load("//scala:scala.bzl", "scala_repositories")
 
 scala_repositories(fetch_sources = True)
 
-load("//scala:scala_cross_version.bzl", "default_maven_server_urls")
+load("//scala:scala_cross_version.bzl", "default_maven_server_urls", "scala_mvn_artifact")
 load("//scala:scala_maven_import_external.bzl", "scala_maven_import_external")
-load("//twitter_scrooge:twitter_scrooge.bzl", "scrooge_scala_library", "twitter_scrooge")
+load("//twitter_scrooge:twitter_scrooge.bzl", "twitter_scrooge")
 
 twitter_scrooge()
 
@@ -47,13 +57,13 @@ load("//specs2:specs2_junit.bzl", "specs2_junit_repositories")
 
 specs2_junit_repositories()
 
+register_toolchains("//testing:testing_toolchain")
+
 load("//scala/scalafmt:scalafmt_repositories.bzl", "scalafmt_default_config", "scalafmt_repositories")
 
 scalafmt_default_config()
 
 scalafmt_repositories()
-
-load("//scala:scala_cross_version.bzl", "default_scala_major_version", "scala_mvn_artifact")
 
 MAVEN_SERVER_URLS = default_maven_server_urls()
 
@@ -61,70 +71,6 @@ MAVEN_SERVER_URLS = default_maven_server_urls()
 load("//test/proto_cross_repo_boundary:repo.bzl", "proto_cross_repo_boundary_repository")
 
 proto_cross_repo_boundary_repository()
-
-# test adding a scala jar:
-jvm_maven_import_external(
-    name = "com_twitter__scalding_date",
-    artifact = scala_mvn_artifact(
-        "com.twitter:scalding-date:0.17.0",
-        default_scala_major_version(),
-    ),
-    artifact_sha256 = "973a7198121cc8dac9eeb3f325c93c497fe3b682f68ba56e34c1b210af7b15b3",
-    server_urls = MAVEN_SERVER_URLS,
-)
-
-# For testing that we don't include sources jars to the classpath
-jvm_maven_import_external(
-    name = "org_typelevel__cats_core",
-    artifact = scala_mvn_artifact(
-        "org.typelevel:cats-core:0.9.0",
-        default_scala_major_version(),
-    ),
-    artifact_sha256 = "3ca705cba9dc0632e60477d80779006f8c636c0e2e229dda3410a0c314c1ea1d",
-    server_urls = MAVEN_SERVER_URLS,
-)
-
-# test of a plugin
-jvm_maven_import_external(
-    name = "org_psywerx_hairyfotr__linter",
-    artifact = scala_mvn_artifact(
-        "org.psywerx.hairyfotr:linter:0.1.17",
-        default_scala_major_version(),
-    ),
-    artifact_sha256 = "59becd7883613064842b3a62f84315b02457dc439f42ef62e3c80408393c905b",
-    server_urls = MAVEN_SERVER_URLS,
-)
-
-# test of strict deps (scalac plugin UT + E2E)
-jvm_maven_import_external(
-    name = "com_google_guava_guava_21_0_with_file",
-    artifact = "com.google.guava:guava:21.0",
-    artifact_sha256 = "972139718abc8a4893fa78cba8cf7b2c903f35c97aaf44fa3031b0669948b480",
-    server_urls = MAVEN_SERVER_URLS,
-)
-
-# test of import external
-# scala maven import external decodes maven artifacts to its parts
-# (group id, artifact id, packaging, version and classifier). To make sure
-# the decoding and then the download url composition are working the artifact example
-# must contain all the different parts and sha256s so the downloaded content will be
-# validated against it
-scala_maven_import_external(
-    name = "com_github_jnr_jffi_native",
-    artifact = "com.github.jnr:jffi:jar:native:1.2.17",
-    artifact_sha256 = "4eb582bc99d96c8df92fc6f0f608fd123d278223982555ba16219bf8be9f75a9",
-    fetch_sources = True,
-    licenses = ["notice"],
-    server_urls = MAVEN_SERVER_URLS,
-    srcjar_sha256 = "5e586357a289f5fe896f7b48759e1c16d9fa419333156b496696887e613d7a19",
-)
-
-jvm_maven_import_external(
-    name = "org_apache_commons_commons_lang_3_5",
-    artifact = "org.apache.commons:commons-lang3:3.5",
-    artifact_sha256 = "8ac96fc686512d777fca85e144f196cd7cfe0c0aec23127229497d1a38ff651c",
-    server_urls = MAVEN_SERVER_URLS,
-)
 
 new_local_repository(
     name = "test_new_local_repo",
@@ -152,16 +98,6 @@ register_toolchains("@io_bazel_rules_scala//test/proto:scalapb_toolchain")
 
 load("//scala:scala_maven_import_external.bzl", "java_import_external", "scala_maven_import_external")
 
-scala_maven_import_external(
-    name = "com_google_guava_guava_21_0",
-    artifact = "com.google.guava:guava:21.0",
-    artifact_sha256 = "972139718abc8a4893fa78cba8cf7b2c903f35c97aaf44fa3031b0669948b480",
-    fetch_sources = True,
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = MAVEN_SERVER_URLS,
-    srcjar_sha256 = "b186965c9af0a714632fe49b33378c9670f8f074797ab466f49a67e918e116ea",
-)
-
 # bazel's java_import_external has been altered in rules_scala to be a macro based on jvm_import_external
 # in order to allow for other jvm-language imports (e.g. scala_import)
 # the 3rd-party dependency below is using the java_import_external macro
@@ -186,8 +122,11 @@ format_repositories()
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "45409e6c4f748baa9e05f8f6ab6efaa05739aa064e3ab94e5a1a09849c51806a",
-    url = "https://github.com/bazelbuild/rules_go/releases/download/0.18.7/rules_go-0.18.7.tar.gz",
+    sha256 = "d1ffd055969c8f8d431e2d439813e42326961d0942bdf734d2c95dc30c369566",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.24.5/rules_go-v0.24.5.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.24.5/rules_go-v0.24.5.tar.gz",
+    ],
 )
 
 load(
@@ -200,17 +139,15 @@ go_rules_dependencies()
 
 go_register_toolchains()
 
-bazel_toolchains_version = "3.4.0"
-
-bazel_toolchains_sha256 = "882fecfc88d3dc528f5c5681d95d730e213e39099abff2e637688a91a9619395"
+bazel_toolchains_version = "3.5.0"
 
 http_archive(
     name = "bazel_toolchains",
-    sha256 = bazel_toolchains_sha256,
+    sha256 = "89a053218639b1c5e3589a859bb310e0a402dedbe4ee369560e66026ae5ef1f2",
     strip_prefix = "bazel-toolchains-%s" % bazel_toolchains_version,
     urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/releases/download/%s/bazel-toolchains-%s.tar.gz" % (bazel_toolchains_version, bazel_toolchains_version),
         "https://github.com/bazelbuild/bazel-toolchains/releases/download/%s/bazel-toolchains-%s.tar.gz" % (bazel_toolchains_version, bazel_toolchains_version),
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/archive/%s.tar.gz" % bazel_toolchains_version,
     ],
 )
 
@@ -226,36 +163,40 @@ rbe_autoconfig(
     name = "buildkite_config",
 )
 
-## deps for tests of limited deps support
+load("//third_party/repositories:repositories.bzl", "repositories")
 
-scala_maven_import_external(
-    name = "org_springframework_spring_core",
-    artifact = "org.springframework:spring-core:5.1.5.RELEASE",
-    artifact_sha256 = "f771b605019eb9d2cf8f60c25c050233e39487ff54d74c93d687ea8de8b7285a",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = MAVEN_SERVER_URLS,
-)
-
-scala_maven_import_external(
-    name = "org_springframework_spring_tx",
-    artifact = "org.springframework:spring-tx:5.1.5.RELEASE",
-    artifact_sha256 = "666f72b73c7e6b34e5bb92a0d77a14cdeef491c00fcb07a1e89eb62b08500135",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = MAVEN_SERVER_URLS,
-    deps = [
-        "@org_springframework_spring_core",
-    ],
-)
-
-## deps for tests of compiler plugin
-scala_maven_import_external(
-    name = "org_spire_math_kind_projector",
+jvm_maven_import_external(
+    name = "org_typelevel__cats_core",
     artifact = scala_mvn_artifact(
-        "org.spire-math:kind-projector:0.9.10",
-        default_scala_major_version(),
+        "org.typelevel:cats-core:0.9.0",
+        SCALA_MAJOR_VERSION,
     ),
-    artifact_sha256 = "36aca2493302e2c037328107a121cda1d28bf9119fbc04fb47ea1ff9bce3c03f",
-    fetch_sources = False,
-    licenses = ["notice"],
+    artifact_sha256 = "3ca705cba9dc0632e60477d80779006f8c636c0e2e229dda3410a0c314c1ea1d",
     server_urls = MAVEN_SERVER_URLS,
+)
+
+repositories(
+    for_artifact_ids = [
+        # test adding a scala jar:
+        "com_twitter__scalding_date",
+        # For testing that we don't include sources jars to the classpath
+        #        "org_typelevel__cats_core",
+        # test of a plugin
+        "org_psywerx_hairyfotr__linter",
+        # test of strict deps (scalac plugin UT + E2E)
+        "com_google_guava_guava_21_0_with_file",
+        "com_github_jnr_jffi_native",
+        "org_apache_commons_commons_lang_3_5",
+        "com_google_guava_guava_21_0",
+        # test of import external
+        # scala maven import external decodes maven artifacts to its parts
+        # (group id, artifact id, packaging, version and classifier). To make sure
+        # the decoding and then the download url composition are working the artifact example
+        # must contain all the different parts and sha256s so the downloaded content will be
+        # validated against it
+        "org_springframework_spring_core",
+        "org_springframework_spring_tx",
+        "org_spire_math_kind_projector",
+    ],
+    maven_servers = MAVEN_SERVER_URLS,
 )

@@ -40,6 +40,10 @@ common_attrs_for_plugin_bootstrapping = {
         default = False,
         mandatory = False,
     ),
+    "neverlink": attr.bool(
+        default = False,
+        mandatory = False,
+    ),
 }
 
 common_attrs = {}
@@ -96,9 +100,10 @@ implicit_deps = {
         default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
     ),
     "_scalac": attr.label(
-        default = Label(
-            "@io_bazel_rules_scala//src/java/io/bazel/rulesscala/scalac",
-        ),
+        executable = True,
+        cfg = "exec",
+        default = Label("@io_bazel_rules_scala//src/java/io/bazel/rulesscala/scalac"),
+        allow_files = True,
     ),
     "_exe": attr.label(
         executable = True,

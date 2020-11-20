@@ -20,7 +20,7 @@ load(
     _collect_plugin_paths = "collect_plugin_paths",
 )
 load(":resources.bzl", _resource_paths = "paths")
-load("@bazel_version//:def.bzl", "BAZEL_VERSION")
+load("@io_bazel_rules_scala_config//:config.bzl", "BAZEL_VERSION")
 
 def expand_location(ctx, flags):
     if hasattr(ctx.attr, "data"):
@@ -177,16 +177,12 @@ DiagnosticsFile: {diagnostics_output}
         content = scalac_args + optional_scalac_args,
     )
 
-    scalac_inputs, _, scalac_input_manifests = ctx.resolve_command(
-        tools = [scalac],
-    )
-
     outs = [output, statsfile, diagnosticsfile]
 
     ins = (
         compiler_classpath_jars.to_list() + all_srcjars.to_list() + list(sources) +
         plugins_list + internal_plugin_jars + classpath_resources + resources +
-        resource_jars + [manifest, argfile] + scalac_inputs
+        resource_jars + [manifest, argfile]
     )
 
     # scalac_jvm_flags passed in on the target override scalac_jvm_flags passed in on the
@@ -199,8 +195,7 @@ DiagnosticsFile: {diagnostics_output}
         ctx.actions.run(
             inputs = ins,
             outputs = outs,
-            executable = scalac.files_to_run.executable,
-            input_manifests = scalac_input_manifests,
+            executable = scalac,
             mnemonic = "Scalac",
             progress_message = "scala %s" % target_label,
             execution_requirements = {"supports-workers": "1"},
@@ -222,8 +217,7 @@ DiagnosticsFile: {diagnostics_output}
         ctx.actions.run(
             inputs = ins,
             outputs = outs,
-            executable = scalac.files_to_run.executable,
-            input_manifests = scalac_input_manifests,
+            executable = scalac,
             mnemonic = "Scalac",
             progress_message = "scala %s" % target_label,
             execution_requirements = {"supports-workers": "1"},
@@ -259,6 +253,7 @@ def compile_java(ctx, source_jars, source_files, output, extra_javac_opts, provi
         #needs to be empty since we want the provider.compile_jars to only contain the sources ijar
         #workaround until https://github.com/bazelbuild/bazel/issues/3528 is resolved
         exports = [],
+        neverlink = getattr(ctx.attr, "neverlink", False),
         java_toolchain = find_java_toolchain(ctx, ctx.attr._java_toolchain),
         host_javabase = find_java_runtime_toolchain(ctx, ctx.attr._host_javabase),
         strict_deps = ctx.fragments.java.strict_java_deps,

@@ -2,49 +2,40 @@ workspace(name = "io_bazel_rules_scala_test")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# bazel-skylib 0.8.0 released 2019.03.20 (https://github.com/bazelbuild/bazel-skylib/releases/tag/0.8.0)
-skylib_version = "0.8.0"
+skylib_version = "1.0.3"
+
 http_archive(
     name = "bazel_skylib",
+    sha256 = "1c531376ac7e5a180e0237938a2536de0c54d93f5c278634818e0efc952dd56c",
     type = "tar.gz",
-    url = "https://github.com/bazelbuild/bazel-skylib/releases/download/{}/bazel-skylib.{}.tar.gz".format (skylib_version, skylib_version),
-    sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
+    url = "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/{}/bazel-skylib-{}.tar.gz".format(skylib_version, skylib_version),
 )
 
 local_repository(
     name = "io_bazel_rules_scala",
     path = "../../"
 )
-
-load("@io_bazel_rules_scala//:version.bzl", "bazel_version")
-bazel_version(name = "bazel_version")
+scala_version = "${scala_version}"
+load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
+scala_config(scala_version = scala_version)
 
 load("@io_bazel_rules_scala//scala:scala_cross_version.bzl", "extract_major_version")
 
-scala_version = "${scala_version}"
-
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
 
-scala_repositories(
-    (scala_version, {
-    ${scala_version_shas}
-    }),
-    fetch_sources = True
-)
+scala_repositories(fetch_sources = True)
 
-load("@io_bazel_rules_scala//twitter_scrooge:twitter_scrooge.bzl", "twitter_scrooge", "scrooge_scala_library")
-
-${twitter_scrooge_version_shas}
-${twitter_scrooge_extra_imports}
-${twitter_scrooge_bindings}
+load("@io_bazel_rules_scala//twitter_scrooge:twitter_scrooge.bzl", "twitter_scrooge")
+${twitter_scrooge_artifacts}
+twitter_scrooge(overriden_artifacts = twitter_scrooge_artifacts)
 
 load("@io_bazel_rules_scala//tut_rule:tut.bzl", "tut_repositories")
 
-tut_repositories(scala_version)
+tut_repositories()
 
 load("@io_bazel_rules_scala//scala_proto:scala_proto.bzl", "scala_proto_repositories")
 
-scala_proto_repositories(scala_version)
+scala_proto_repositories()
 
 load("@io_bazel_rules_scala//scala_proto:toolchains.bzl", "scala_proto_register_toolchains")
 
@@ -52,7 +43,9 @@ scala_proto_register_toolchains()
 
 load("@io_bazel_rules_scala//specs2:specs2_junit.bzl", "specs2_junit_repositories")
 
-specs2_junit_repositories(scala_version)
+specs2_junit_repositories()
+
+register_toolchains("@io_bazel_rules_scala//testing:testing_toolchain")
 
 load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_unused_deps_toolchains")
 

@@ -62,16 +62,14 @@ def phase_compile_junit_test(ctx, p):
     args = struct(
         buildijar = False,
         implicit_junit_deps_needed_for_java_compilation = [
-            ctx.attr._junit,
-            ctx.attr._hamcrest,
+            ctx.attr._junit_classpath,
         ],
         unused_dependency_checker_ignored_targets = [
             target.label
             for target in p.scalac_provider.default_classpath +
                           ctx.attr.unused_dependency_checker_ignored_targets
         ] + [
-            ctx.attr._junit.label,
-            ctx.attr._hamcrest.label,
+            ctx.attr._junit_classpath.label,
             ctx.attr.suite_label.label,
             ctx.attr._bazel_test_runner.label,
         ],
@@ -206,7 +204,7 @@ def _compile_or_empty(
             ctx.attr.print_compile_time,
             ctx.attr.expect_java_output,
             ctx.attr.scalac_jvm_flags,
-            ctx.attr._scalac,
+            ctx.executable._scalac,
             dependency_info,
             unused_dependency_checker_ignored_targets,
         )
@@ -302,6 +300,7 @@ def _create_scala_compilation_provider(ctx, ijar, source_jar, deps_providers):
         deps = deps_providers,
         exports = exports,
         runtime_deps = runtime_deps,
+        neverlink = ctx.attr.neverlink,
     )
 
 def _pack_source_jar(ctx, scala_srcs, in_srcjars):
