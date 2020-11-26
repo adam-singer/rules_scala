@@ -80,7 +80,8 @@ object ScroogeWorker extends Worker.Interface {
       includePaths = onlyTransitiveThriftSrcJars ++ remoteSrcJars,
       // always add finagle option which is a no-op if there are no services
       flags = Set(WithFinagle),
-      strict = false)
+      strict = false,
+    )
 
     val scrooge = ScroogeOptionParser.parseOptions(flags, defaultConfig)
       .map(cfg => new Compiler(cfg))
