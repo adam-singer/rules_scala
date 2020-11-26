@@ -51,10 +51,10 @@ declare_deps_provider(
     deps_id = "compiler_classpath",
     visibility = ["//visibility:public"],
     deps = [
+        "//external:io_bazel_rules_scala/dependency/thrift/mustache",
         "//external:io_bazel_rules_scala/dependency/thrift/scrooge_generator",
         "//external:io_bazel_rules_scala/dependency/thrift/util_core",
         "//external:io_bazel_rules_scala/dependency/thrift/util_logging",
-        "//external:io_bazel_rules_scala/dependency/thrift/mustache",
         "//scala/private/toolchain_deps:parser_combinators",
     ],
 )

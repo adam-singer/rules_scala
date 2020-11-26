@@ -130,6 +130,7 @@ def scala_repositories(
         name = "io_bazel_rules_scala/dependency/scala/scalactic/scalactic",
         actual = "@io_bazel_rules_scala_scalactic",
     )
+
     # Remove this dependency when ScroogeConfig and ScroogeOptionParser are added to the com.twitter.scrooge
     native.bind(
         name = "io_bazel_rules_scala/dependency/scala/scopt",
