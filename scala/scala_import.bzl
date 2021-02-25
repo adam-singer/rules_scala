@@ -31,6 +31,7 @@ def _stamp_jar(ctx, jar):
             stamped_file.path,
         ],
         mnemonic = "StampWithIjar",
+        use_default_shell_env = True,
     )
 
     return stamped_file
